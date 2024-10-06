@@ -1,5 +1,7 @@
 #pragma once
 
+#include "em/meta/packs.h"
+
 // Generalizes `std::allocator_traits::rebind` for arbitrary types.
 
 namespace em::Meta
@@ -19,9 +21,9 @@ namespace em::Meta
         struct Rebind<T<P0, P...>, U> {using type = T<U, P...>;};
     }
 
-    // If `T` has a member type `rebind<U>::other`, returns that type.
-    // Otherwise if `T` is `TT<X, ...>`, returns `TT<U, ...>`.
-    // Otherwise fails.
-    template <typename T, typename U> requires requires{typename detail::Rebind<T, U>::type;}
-    using rebind = typename detail::Rebind<T, U>::type;
+    // If `P` has a member type `rebind<T>::other`, returns that type.
+    // Otherwise if `P` is `TT<X, ...>`, returns `TT<U, ...>`. Otherwise fails.
+    // Repeats this for every `P...`, and fails if the results are different.
+    template <typename T, typename ...P>
+    using rebind_to = require_same_type<typename detail::Rebind<P, T>::type...>;
 }

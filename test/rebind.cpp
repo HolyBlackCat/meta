@@ -22,8 +22,14 @@ struct D
 };
 
 // Only member rebind.
-static_assert(std::is_same_v<em::Meta::rebind<B, int>, A<int>>);
+static_assert(std::is_same_v<em::Meta::rebind_to<int, B>, A<int>>);
 // Only template parameter.
-static_assert(std::is_same_v<em::Meta::rebind<C<double, float>, int>, C<int, float>>);
+static_assert(std::is_same_v<em::Meta::rebind_to<int, C<double, float>>, C<int, float>>);
 // Member rebind has precedence over template parameter.
-static_assert(std::is_same_v<em::Meta::rebind<D<double, float>, int>, A<int>>);
+static_assert(std::is_same_v<em::Meta::rebind_to<int, D<double, float>>, A<int>>);
+
+// Check multi-parameter rebind.
+template <typename T, typename ...P>
+concept CanRebind = requires{typename em::Meta::rebind_to<T, P...>;};
+static_assert(CanRebind<int, A<int>, D<double, float>>); // Same types ok.
+static_assert(!CanRebind<int, A<int>, C<double, float>>); // Different types not ok.

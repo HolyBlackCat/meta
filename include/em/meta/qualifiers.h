@@ -1,5 +1,6 @@
 #pragma once
 
+#include <concepts>
 #include <type_traits>
 
 // Manipulating cvref-qualifiers.
@@ -51,4 +52,10 @@ namespace em::Meta
 
     template <typename A, typename B> using copy_cv = typename detail::copy_cv<std::remove_reference_t<A>, B>::type;
     template <typename A, typename B> using copy_cvref = typename detail::copy_cvref<A, B>::type;
+
+
+    // Comparison ignoring qualifiers.
+
+    template <typename A, typename B> concept same_ignoring_cv = std::same_as<std::remove_cv_t<A>, std::remove_cv_t<B>>;
+    template <typename A, typename B> concept same_ignoring_cvref = std::same_as<std::remove_cvref_t<A>, std::remove_cvref_t<B>>;
 }
