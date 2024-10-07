@@ -6,15 +6,25 @@
 
 namespace em::Meta
 {
+    template <typename, typename...>
+    inline constexpr auto always_false = false;
+
+
     namespace detail
     {
         // Need this class to avoid `Pack expansion used as argument for non-pack parameter of alias template`.
+        // Also for `void_type` to not be buggy.
         template <typename T, typename ...P> struct FirstType {using type = T;};
     }
 
     // Returns the first type in the pack.
     template <typename ...P>
     using first_type = typename detail::FirstType<P...>::type;
+
+    // Always `void`.
+    template <typename ...P>
+    using void_type = first_type<void, P...>;
+
 
     // Checks if all types are equal.
     // Need `first_type` to avoid `Pack expansion used as argument for non-pack parameter of alias template` in some usages.
