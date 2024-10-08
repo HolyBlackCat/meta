@@ -11,7 +11,7 @@ namespace em::Meta
     template <auto...> struct value_list {};
 
 
-    namespace impl
+    namespace detail
     {
         // Generates a list from the arguments of an artibrary template.
         template <typename T> struct list_from {};
@@ -144,40 +144,40 @@ namespace em::Meta
     }
 
     // Generates a list from the arguments of an artibrary template.
-    template <typename T> using list_from = typename impl::list_from<T>::type;
+    template <typename T> using list_from = typename detail::list_from<T>::type;
 
     // Substitutes elements of a list into a type template.
-    template <template <typename...> typename T, typename L> using list_apply_types = typename impl::list_apply_types<T, L>::type;
-    template <template <auto...> typename T, typename L> using list_apply_values = typename impl::list_apply_values<T, L>::type;
+    template <template <typename...> typename T, typename L> using list_apply_types = typename detail::list_apply_types<T, L>::type;
+    template <template <auto...> typename T, typename L> using list_apply_values = typename detail::list_apply_values<T, L>::type;
 
     // Returns size of a `{type|value}_list`.
-    template <typename T> inline constexpr std::size_t list_size = impl::list_size<T>::value;
+    template <typename T> inline constexpr std::size_t list_size = detail::list_size<T>::value;
 
     // Concatenates two lists.
-    template <typename ...P> using list_cat_types = typename impl::list_cat_types<P...>::type;
-    template <typename ...P> using list_cat_values = typename impl::list_cat_values<P...>::type;
+    template <typename ...P> using list_cat_types = typename detail::list_cat_types<P...>::type;
+    template <typename ...P> using list_cat_values = typename detail::list_cat_values<P...>::type;
 
     // Return ith element of a list.
-    template <typename T, std::size_t I> using list_type_at = typename impl::list_at<T, I>::type;
-    template <typename T, std::size_t I> inline constexpr auto list_value_at = impl::list_at<T, I>::value;
+    template <typename T, std::size_t I> using list_type_at = typename detail::list_at<T, I>::type;
+    template <typename T, std::size_t I> inline constexpr auto list_value_at = detail::list_at<T, I>::value;
 
     // Check if a list contains an element.
-    template <typename L, typename T> inline constexpr bool list_contains_type = impl::list_contains_type<L, T>::value;
-    template <typename L, auto V> inline constexpr bool list_contains_value = impl::list_contains_value<L, V>::value;
+    template <typename L, typename T> inline constexpr bool list_contains_type = detail::list_contains_type<L, T>::value;
+    template <typename L, auto V> inline constexpr bool list_contains_value = detail::list_contains_value<L, V>::value;
 
     // Check if a list is a subset of a different list.
     // E.e. each element of the first list is contained in the second list. So doesn't have to be a strict subset.
-    template <typename A, typename B> inline constexpr bool list_is_subset_of = impl::list_is_subset_of<A, B>::value;
+    template <typename A, typename B> inline constexpr bool list_is_subset_of = detail::list_is_subset_of<A, B>::value;
 
     // Those types have following members:
     // - `std::size_t value` - the element index, or the list size if not found.
     // - `bool found` - whether the element was found or not.
     // - `using remaining` - the list of elements after the one that was found, or an empty list if not found.
-    template <typename L, typename T> using list_find_type = impl::list_find_type<L, T>;
-    template <typename L, auto V> using list_find_value = impl::list_find_value<L, V>;
+    template <typename L, typename T> using list_find_type = detail::list_find_type<L, T>;
+    template <typename L, auto V> using list_find_value = detail::list_find_value<L, V>;
 
     // Add all elements from `A` that don't exist in `B` to `B`.
-    template <typename A, typename B> using list_copy_uniq = typename impl::list_copy_uniq<A, B>::type;
+    template <typename A, typename B> using list_copy_uniq = typename detail::list_copy_uniq<A, B>::type;
     // Remove duplicate elements from a list.
-    template <typename T> using list_uniq = typename impl::list_uniq<T>::type;
+    template <typename T> using list_uniq = typename detail::list_uniq<T>::type;
 }
