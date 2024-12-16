@@ -1,6 +1,6 @@
 #pragma once
 
-#include "em/meta/tags.h" // For `value_tag`.
+#include "em/meta/tags.h" // For `ValueTag`.
 #include "em/meta/packs.h" // For `always_false`.
 
 #include <type_traits>
@@ -63,7 +63,7 @@ namespace em::Meta
         };
         template <std::size_t I> struct list_at<TypeList<>, I>
         {
-            static_assert(always_false<value_tag<I>>, "List index is out of range.");
+            static_assert(always_false<ValueTag<I>>, "List index is out of range.");
         };
 
         template <auto V, auto ...P, std::size_t I> struct list_at<ValueList<V, P...>, I>
@@ -76,7 +76,7 @@ namespace em::Meta
         };
         template <std::size_t I> struct list_at<ValueList<>, I>
         {
-            static_assert(always_false<value_tag<I>>, "List index is out of range.");
+            static_assert(always_false<ValueTag<I>>, "List index is out of range.");
         };
 
         // Check if a list contains a value.
