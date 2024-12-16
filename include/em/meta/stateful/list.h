@@ -27,7 +27,7 @@ namespace em::Meta::Stateful
             {
                 friend constexpr auto _adl_em_StatefulListElem(ElemReader<Name, Index>)
                 {
-                    return tag<Value>{};
+                    return Tag<Value>{};
                 }
             };
 
