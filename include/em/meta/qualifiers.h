@@ -13,6 +13,29 @@ namespace em::Meta
     template <typename T> concept cvref_unqualified = std::is_same_v<std::remove_cvref_t<T>, T>;
 
 
+    // Add qualifiers.
+
+    namespace detail
+    {
+        template <typename T> struct cvref_const {using type = const T;};
+        template <typename T> struct cvref_const<T &> {using type = const T &;};
+        template <typename T> struct cvref_const<T &&> {using type = const T &&;};
+    }
+
+    // Exactly like `std::add_const_t`.
+    template <typename T> using cv_const = const T;
+
+    // Given `T [const] [volatile] [&|&&]`, returns `T const [volatile] [&|&&]`.
+    // Unlike `std::add_const_t<T>` and `const T`, this injects constness into the referenced type for references.
+    template <typename T> using cvref_const = typename detail::cvref_const<T>::type;
+
+    // Forwards `x` with constness added. Unlike `std::as_const()`, this can also handle rvalues.
+    inline constexpr auto make_const = []<typename T> [[nodiscard]] (T &&x) -> auto &&
+    {
+        return static_cast<cvref_const<T &&>>(x);
+    };
+
+
     // Conditional constness.
     // `maybe_const<true, T>` is `const T`, and `maybe_const<false, T>` is just `T`.
 
