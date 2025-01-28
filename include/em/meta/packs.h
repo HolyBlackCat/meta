@@ -6,10 +6,6 @@
 
 namespace em::Meta
 {
-    template <typename, typename...>
-    inline constexpr auto always_false = false;
-
-
     namespace detail
     {
         // Need this class to avoid `Pack expansion used as argument for non-pack parameter of alias template`.

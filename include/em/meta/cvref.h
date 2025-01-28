@@ -7,7 +7,7 @@
 
 namespace em::Meta
 {
-    // Some concepts.
+    // Check lack of qualifiers.
 
     template <typename T> concept cv_unqualified = std::is_same_v<std::remove_cv_t<T>, T>;
     template <typename T> concept cvref_unqualified = std::is_same_v<std::remove_cvref_t<T>, T>;
@@ -34,6 +34,10 @@ namespace em::Meta
     {
         return static_cast<cvref_const<T &&>>(x);
     };
+
+    // If `T` is a non-reference, make it a const rvalue reference.
+    template <typename T>
+    using nonref_to_const_rvalue_ref = std::conditional_t<std::is_reference_v<T>, T, const T &&>;
 
 
     // Conditional constness.
@@ -81,4 +85,20 @@ namespace em::Meta
 
     template <typename A, typename B> concept same_ignoring_cv = std::same_as<std::remove_cv_t<A>, std::remove_cv_t<B>>;
     template <typename A, typename B> concept same_ignoring_cvref = std::same_as<std::remove_cvref_t<A>, std::remove_cvref_t<B>>;
+
+
+    namespace detail
+    {
+        template <typename A, typename B>
+        struct same_ignoring_cvref_and_convertible : std::false_type {};
+
+        template <typename A, typename B> requires same_ignoring_cvref<A, B>
+        struct same_ignoring_cvref_and_convertible<A, B> : std::is_convertible<A, B> {};
+    }
+
+    // What it says on the tin.
+    // Returns true if `A` and `B` are the same ignoring cvref-qualifiers, AND if A is convertible to B.
+    // Here `same_ignoring_cvref<A, B>` is redundant (but added for subsumption), and the implementation (`same_ignoring_cvref_and_convertible`)
+    //   checks it again to hopefully avoid checking convertability when not needed.
+    template <typename A, typename B> concept same_ignoring_cvref_and_convertible = same_ignoring_cvref<A, B> && detail::same_ignoring_cvref_and_convertible<A, B>::value;
 }
