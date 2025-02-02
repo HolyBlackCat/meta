@@ -38,17 +38,31 @@ namespace em::Meta
         template <auto ...T, auto ...P> struct list_append_values<ValueList<T...>, P...> {using type = ValueList<T..., P...>;};
 
         // Concat two lists.
+        template <typename T, typename ...P> struct list_cat {};
+        template <typename ...A> struct list_cat<TypeList<A...>> {using type = TypeList<A...>;}; // Using a parameter pack here to reject non-lists.
+        template <auto ...A> struct list_cat<ValueList<A...>> {using type = ValueList<A...>;}; // ^
+        template <typename ...A, typename ...B> struct list_cat<TypeList<A...>, TypeList<B...>> {using type = TypeList<A..., B...>;};
+        template <auto ...A, auto ...B> struct list_cat<ValueList<A...>, ValueList<B...>> {using type = ValueList<A..., B...>;};
+        template <typename A, typename B, typename ...P> struct list_cat<A, B, P...> {using type = typename list_cat<A, typename list_cat<B, P...>::type>::type;};
+
+        // Concat two type lists (this allows passing zero lists and getting a `TypeList<>`).
         template <typename ...P> struct list_cat_types {};
         template <> struct list_cat_types<> {using type = TypeList<>;};
         template <typename ...A> struct list_cat_types<TypeList<A...>> {using type = TypeList<A...>;}; // Using a parameter pack here to reject non-lists.
         template <typename ...A, typename ...B> struct list_cat_types<TypeList<A...>, TypeList<B...>> {using type = TypeList<A..., B...>;};
         template <typename A, typename ...P> struct list_cat_types<A, P...> {using type = typename list_cat_types<A, typename list_cat_types<P...>::type>::type;};
 
+        // Concat two value lists (this allows passing zero lists and getting a `ValueList<>`).
         template <typename ...P> struct list_cat_values {};
         template <> struct list_cat_values<> {using type = ValueList<>;};
         template <auto ...A> struct list_cat_values<ValueList<A...>> {using type = ValueList<A...>;}; // Using a parameter pack here to reject non-lists.
         template <auto ...A, auto ...B> struct list_cat_values<ValueList<A...>, ValueList<B...>> {using type = ValueList<A..., B...>;};
         template <typename A, typename ...P> struct list_cat_values<A, P...> {using type = typename list_cat_values<A, typename list_cat_values<P...>::type>::type;};
+
+        // Given a list, produces an empty `TypeList<>` or `ValueList<>`, matching the kind of the incoming list.
+        template <typename T> struct list_empty_of_same_kind {};
+        template <typename ...P> struct list_empty_of_same_kind<TypeList<P...>> {using type = TypeList<>;};
+        template <auto ...P> struct list_empty_of_same_kind<ValueList<P...>> {using type = ValueList<>;};
 
         // Return ith element of a list.
         template <typename T, std::size_t I> struct list_at {};
@@ -170,6 +184,31 @@ namespace em::Meta
         template <typename T, typename ...P> struct list_subtract {};
         template <typename ...T, typename ...P> struct list_subtract<TypeList<T...>, P...> : list_copy_subtract<TypeList<T...>, TypeList<>, P...> {};
         template <auto ...T, typename ...P> struct list_subtract<ValueList<T...>, P...> : list_copy_subtract<ValueList<T...>, ValueList<>, P...> {};
+
+        // Helpers for `list_subtract_ordered`. See the comments on the public typedef with that name below for an explanation.
+        // Subtracts ordered lists from each other.
+
+        // Searches for type/value `Sub` in list `In`. On success, appends the part of `In` before the element to `Out` and returns that as `::out`,
+        //   and returns the remaining part of `In` without the element as `::in`.
+        // If not found, returns `OrigOut` and `OrigIn` unchanged, as `::out` and `::in` respectively.
+        // Here you should initially pass `OrigIn == In` and `OrigOut == Out`, or `::in` and `::out` from the previous iteration.
+        template <typename OrigIn, typename OrigOut, typename In, typename Out, typename Sub> struct list_subtract_ordered_3_types {using in = OrigIn; using out = OrigOut;};
+        template <typename OrigIn, typename OrigOut, typename Elem, typename ...In, typename Out              > struct list_subtract_ordered_3_types<OrigIn, OrigOut, TypeList<Elem, In...>, Out, Elem> {using in = TypeList<In...>; using out = Out;};
+        template <typename OrigIn, typename OrigOut, typename Elem, typename ...In, typename Out, typename Sub> struct list_subtract_ordered_3_types<OrigIn, OrigOut, TypeList<Elem, In...>, Out, Sub > : list_subtract_ordered_3_types<OrigIn, OrigOut, TypeList<In...>, typename list_append_types<Out, Elem>::type, Sub> {};
+        template <typename OrigIn, typename OrigOut, typename In, typename Out, auto Sub> struct list_subtract_ordered_3_values {using in = OrigIn; using out = OrigOut;};
+        template <typename OrigIn, typename OrigOut, auto Elem, auto ...In, typename Out          > struct list_subtract_ordered_3_values<OrigIn, OrigOut, ValueList<Elem, In...>, Out, Elem> {using in = ValueList<In...>; using out = Out;};
+        template <typename OrigIn, typename OrigOut, auto Elem, auto ...In, typename Out, auto Sub> struct list_subtract_ordered_3_values<OrigIn, OrigOut, ValueList<Elem, In...>, Out, Sub > : list_subtract_ordered_3_values<OrigIn, OrigOut, ValueList<In...>, typename list_append_values<Out, Elem>::type, Sub> {};
+
+        // Applies `list_subtract_ordered_3` for each individual element in the list `Sub`, preserving `In` and `Out` between iterations.
+        // Initially you should pass an empty list to `Out`.
+        template <typename In, typename Out, typename Sub> struct list_subtract_ordered_2 {using type = typename list_cat<Out, In>::type;};
+        template <typename In, typename Out, typename Sub0, typename ...Sub> struct list_subtract_ordered_2<In, Out, TypeList<Sub0, Sub...>> : list_subtract_ordered_2<typename list_subtract_ordered_3_types<In, Out, In, Out, Sub0>::in, typename list_subtract_ordered_3_types<In, Out, In, Out, Sub0>::out, TypeList<Sub...>> {};
+        template <typename In, typename Out, auto Sub0, auto ...Sub> struct list_subtract_ordered_2<In, Out, ValueList<Sub0, Sub...>> : list_subtract_ordered_2<typename list_subtract_ordered_3_values<In, Out, In, Out, Sub0>::in, typename list_subtract_ordered_3_values<In, Out, In, Out, Sub0>::out, ValueList<Sub...>> {};
+
+        // See the public `list_subtract_ordered` below for explanation.
+        // Applies `list_subtract_ordered_2` for each list in `Sub...`.
+        template <typename In, typename ...Sub> struct list_subtract_ordered {using type = In;};
+        template <typename In, typename Sub0, typename ...Sub> struct list_subtract_ordered<In, Sub0, Sub...> : list_subtract_ordered<typename list_subtract_ordered_2<In, typename list_empty_of_same_kind<In>::type, Sub0>::type, Sub...> {};
     }
 
     // Generates a list from the arguments of an artibrary template.
@@ -186,10 +225,15 @@ namespace em::Meta
     template <typename T, typename ...P> using list_append_types = typename detail::list_append_types<T, P...>::type;
     template <typename T, auto ...P> using list_append_values = typename detail::list_append_values<T, P...>::type;
 
-    // Concatenates several lists. Those two are separate because when no lists are specified, we otherwise can't tell if we need to return
-    //   an empty type list or an empty value list.
+    // Concatenates several lists.
+    // `list_cat` can handle both types and values, but can't handle zero lists.
+    // `list_cat_types` and `list_cat_values` only handle types and values respectively, and can handle zero lists.
+    template <typename T, typename ...P> using list_cat = typename detail::list_cat<T, P...>::type;
     template <typename ...P> using list_cat_types = typename detail::list_cat_types<P...>::type;
     template <typename ...P> using list_cat_values = typename detail::list_cat_values<P...>::type;
+
+    // Given a list, produces an empty `TypeList<>` or `ValueList<>`, matching the kind of the incoming list.
+    template <typename T> using list_empty_of_same_kind = typename detail::list_empty_of_same_kind<T>::type;
 
     // Return ith element of a list.
     template <typename T, std::size_t I> using list_type_at = typename detail::list_at<T, I>::type;
@@ -220,6 +264,16 @@ namespace em::Meta
 
     // Copies elements from list `T` to list `U`, but only those that don't appear in any of the lists `P...`.
     template <typename T, typename U, typename ...P> using list_copy_subtract = typename detail::list_copy_subtract<T, U, P...>::type;
-    // Returns a list fo elements from list `T` that don't appear in any of the lists `P...`.
+    // Returns a list of elements from list `T` that don't appear in any of the lists `P...`.
     template <typename T, typename ...P> using list_subtract = typename detail::list_subtract<T, P...>::type;
+
+    // A supposedly more optimized version of `list_subtract` that only operates on ordered lists.
+    // Each of the lists must be sorted in the same unspecified order. If they aren't sorted, some elements might not be removed.
+    // It doesn't matter in what order the lists `P...` themselves are passed.
+    // Internally does following:
+    //   For each element to remove, scans the entire input list. If it finds that element, it will not rescan the part before it again,
+    //   until we switch to the next list to subtract. Which means the order of lists `P...` doesn't matter, only the order of elements
+    //   inside of each individual list matters.
+    template <typename T, typename ...P>
+    using list_subtract_ordered = typename detail::list_subtract_ordered<T, P...>::type;
 }
