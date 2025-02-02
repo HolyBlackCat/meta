@@ -249,6 +249,8 @@ namespace em::Meta
 
     // Check if both lists have the same elements, ignoring order and duplicates.
     template <typename A, typename B> constexpr bool lists_have_same_elems = detail::lists_have_same_elems<A, B>::value;
+    // Same, but also require list sizes to match.
+    template <typename A, typename B> constexpr bool lists_have_same_elems_and_size = lists_have_same_elems<A, B> && list_size<A> == list_size<B>;
 
     // Those types have following members:
     // - `std::size_t value` - the element index, or the list size if not found.

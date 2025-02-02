@@ -89,7 +89,7 @@ namespace em::Meta::DetectBases
     namespace detail
     {
         // NOTE: Here we use `list_subtract_ordered` as an optimization, hopefully. We expect that the bases appear in the same implementation-defined order.
-        // If you get more bases than you expect, use the regular `list_subtract` here, hopefully behind an `#ifdef`.
+        // If you get more DIRECT bases than you expect, use the regular `list_subtract` here, hopefully behind an `#ifdef`.
         template <typename Tag, typename T, typename U = T> struct SubtractBases {};
         template <typename Tag, typename T, typename ...U> struct SubtractBases<Tag, T, Meta::TypeList<U...>> {using type = Meta::list_subtract_ordered<T, NonVirtualBasesFlat<Tag, U>...>;};
     }
@@ -97,4 +97,7 @@ namespace em::Meta::DetectBases
     // Direct non-virtual bases, excluding self.
     template <typename Tag, typename T>
     using NonVirtualBasesDirect = typename detail::SubtractBases<Tag, NonVirtualBasesFlat<Tag, T>>::type;
+    // Same, but includes `T` as the last type in the list.
+    template <typename Tag, typename T>
+    using NonVirtualBasesDirectAndSelf = Meta::list_append_types<NonVirtualBasesDirect<Tag, T>, T>;
 }
