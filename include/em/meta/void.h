@@ -32,22 +32,12 @@ namespace em::Meta
         }
     }
 
-    // If `cond` is the `VoidPlaceholder`, returns true by value. Otherwise forwards `cond` and returns a reference.
-    template <Deduce..., typename T>
-    [[nodiscard]] constexpr decltype(auto) VoidToTrue(T &&cond)
+    // If `cond` is the `VoidPlaceholder`, returns `Value` by value. Otherwise forwards `cond` and returns a reference.
+    template <auto Value, Deduce..., typename T>
+    [[nodiscard]] constexpr decltype(auto) VoidTo(T &&cond)
     {
         if constexpr (IsVoidPlaceholder<T>)
-            return true;
-        else
-            return std::forward<T>(cond);
-    }
-
-    // If `cond` is the `VoidPlaceholder`, returns false by value. Otherwise forwards `cond` and returns a reference.
-    template <Deduce..., typename T>
-    [[nodiscard]] constexpr decltype(auto) VoidToFalse(T &&cond)
-    {
-        if constexpr (IsVoidPlaceholder<T>)
-            return false;
+            return Value;
         else
             return std::forward<T>(cond);
     }
