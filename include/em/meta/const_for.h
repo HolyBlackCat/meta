@@ -51,7 +51,7 @@ namespace em::Meta
                     {
                         decltype(auto) ret = InvokeWithVoidPlaceholderResult(EM_EXPR(func.template operator()<I0>()));
                         EM_IF_ELSE_MAYBE_CONSTEXPR(
-                            VoidTo<false>(ret),
+                            (VoidTo<false>)(ret),
                             (
                                 EM_RETURN_VARIABLE(ret);
                             ),
@@ -148,7 +148,7 @@ namespace em::Meta
             {
                 decltype(auto) ret = InvokeWithVoidPlaceholderResult(func0);
                 EM_IF_ELSE_MAYBE_CONSTEXPR(
-                    VoidTo<false>(ret),
+                    (VoidTo<false>)(ret),
                     (
                         EM_RETURN_VARIABLE(ret);
                     ),
