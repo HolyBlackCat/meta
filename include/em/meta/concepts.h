@@ -15,5 +15,5 @@ namespace em::Meta
     concept truthy_type = std::derived_from<std::remove_cvref_t<T>, std::true_type> && !std::derived_from<std::remove_cvref_t<T>, std::false_type>;
 
     template <typename T>
-    concept falsy_type = std::derived_from<std::remove_cvref_t<T>, std::false_type> && !std::derived_from<std::remove_cvref_t<T>, std::true_type>;
+    concept falsey_type = std::derived_from<std::remove_cvref_t<T>, std::false_type> && !std::derived_from<std::remove_cvref_t<T>, std::true_type>;
 }
