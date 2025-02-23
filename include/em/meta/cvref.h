@@ -17,6 +17,19 @@ namespace em::Meta
     template <typename T> concept cvref_unqualified = std::is_same_v<std::remove_cvref_t<T>, T>;
 
 
+    // --- Comparison ignoring qualifiers.
+
+    template <typename A, typename B> concept same_ignoring_cv = std::same_as<std::remove_cv_t<A>, std::remove_cv_t<B>>;
+    template <typename A, typename B> concept same_ignoring_cvref = std::same_as<std::remove_cvref_t<A>, std::remove_cvref_t<B>>;
+
+    // `Derived` is derived from `Base` (or are the same type, possibly non-class) (ignoring cvref-qualifiers on both),
+    // and `Derived` is convertible to `Base` (respecting the cvref-qualifiers.
+    template <typename Derived, typename Base>
+    concept cvref_derived_from_and_convertible_to =
+        (same_ignoring_cvref<Derived, Base> || std::derived_from<std::remove_cvref_t<Derived>, std::remove_cvref_t<Base>>) &&
+        std::convertible_to<Derived &&, Base>; // Note the added `&&` on the first argument. Not doing that explodes on incomplete types for no good reason.
+
+
     // --- Add qualifiers.
 
     namespace detail
@@ -79,12 +92,6 @@ namespace em::Meta
     template <typename A, typename B> using copy_cvref = typename detail::copy_cvref_impl<A, B>::type;
 
 
-    // Comparison ignoring qualifiers.
-
-    template <typename A, typename B> concept same_ignoring_cv = std::same_as<std::remove_cv_t<A>, std::remove_cv_t<B>>;
-    template <typename A, typename B> concept same_ignoring_cvref = std::same_as<std::remove_cvref_t<A>, std::remove_cvref_t<B>>;
-
-
     // Representing cvref as flags.
 
     enum class CvrefFlags : unsigned char
@@ -140,8 +147,8 @@ namespace em::Meta
 
     // Returns `CvrefFlags` and `std::type_info` for a type.
     template <typename T>
-    constexpr CvrefFlagsAndType type_to_desc = {.flags = cvref_to_flags<T>, .type = &typeid(T)};
 
+    constexpr CvrefFlagsAndType type_to_desc = {.flags = cvref_to_flags<T>, .type = &typeid(T)};
 
     // Checks that `from` flags are convertible to `to` flags.
     // If `to` is a non-ref, this version always returns false (you must check for that manually, taking into account copyability/movability of the type).
@@ -159,7 +166,7 @@ namespace em::Meta
             ((from & CvrefFlags::ref_mask) == CvrefFlags::lvalue_ref) == ((to & CvrefFlags::ref_mask) == CvrefFlags::lvalue_ref);
     }
 
-    // Checks that `desc` describes the same type as `desc` and the cvref-qualifiers are compatible.
+    // Checks that `T` is constructible from `desc`, and both are the same type ignoring cvref-qualifiers.
     // If `from` is a non-ref, it's assumed to be an rvalue ref. You can adjust it manually before calling if you don't like this.
     template <typename T>
     [[nodiscard]] constexpr bool SameTypeAndConstructibleFromDesc(const CvrefFlagsAndType &desc)
@@ -178,5 +185,19 @@ namespace em::Meta
             else
                 return (desc.flags & CvrefFlags::ref_mask) == CvrefFlags::lvalue_ref ? std::is_constructible_v<T, T &> : std::is_constructible_v<T, T &&>;
         }
+    }
+
+    // Checks that `desc` is constructible from `T`, and both are the same type ignoring cvref-qualifiers.
+    // If `T` is a non-ref, it's assumed to be an rvalue ref.
+    template <typename T>
+    [[nodiscard]] constexpr bool SameTypeAndDescIsConstructibleFrom(const CvrefFlagsAndType &desc)
+    {
+        if (*desc.type != typeid(T))
+            return false;
+
+        if (bool(desc.flags & CvrefFlags::ref_mask))
+            return CvrefFlagsConvertible(cvref_to_flags<T>, desc.flags);
+        else
+            return std::is_constructible_v<std::remove_cvref_t<T>, T &&>;
     }
 }
