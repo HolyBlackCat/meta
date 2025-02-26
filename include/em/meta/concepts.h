@@ -11,9 +11,29 @@ namespace em::Meta
     template <typename T>
     concept reference = std::is_reference_v<T>;
 
-    template <typename T>
-    concept truthy_type = std::derived_from<std::remove_cvref_t<T>, std::true_type> && !std::derived_from<std::remove_cvref_t<T>, std::false_type>;
 
+    namespace detail::Truthy
+    {
+        template <typename T>
+        extern T declvar;
+    }
+
+    #ifdef __clang__
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wundefined-var-template"
+    #endif
+
+    // Returns true if the type `T` is always true when converted to `bool`, and is constexpr-convertible to bool even when it's not constexpr itself.
+    // Such is e.g. `std::true_type` (but not references to it, at the time of writing).
     template <typename T>
-    concept falsey_type = std::derived_from<std::remove_cvref_t<T>, std::false_type> && !std::derived_from<std::remove_cvref_t<T>, std::true_type>;
+    concept truthy_type = std::bool_constant<detail::Truthy::declvar<T> ? true : false>::value;
+
+    // Returns true if the type `T` is always false when converted to `bool`, and is constexpr-convertible to bool even when it's not constexpr itself.
+    // Such is e.g. `std::false_type` or `std::nullptr_t` (but not references to those, at the time of writing).
+    template <typename T>
+    concept falsey_type = std::bool_constant<detail::Truthy::declvar<T> ? false : true>::value;
+
+    #ifdef __clang__
+    #pragma clang diagnostic pop
+    #endif
 }
