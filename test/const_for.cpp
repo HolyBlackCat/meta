@@ -1,70 +1,41 @@
 #include "em/meta/const_for.h"
 
-static_assert(std::is_void_v<decltype(em::Meta::ConstForEx<4>([]<int i>{}))>);
-static_assert(std::is_same_v<decltype(em::Meta::ConstForEx<0>([]<int i>{})), em::Meta::NoElements<false>>);
+static_assert(std::is_void_v<decltype(em::Meta::ConstFor<em::Meta::LoopSimple, 0>([]<int i>{}))>);
+static_assert(std::is_void_v<decltype(em::Meta::ConstFor<em::Meta::LoopSimple, 4>([]<int i>{}))>);
 
-static_assert(em::Meta::ConstForEx<4>([]<int i>{if constexpr (i == 2) return i; else return 0;}) == 2);
-static_assert(em::Meta::ConstForEx<4>([]<int i>{if constexpr (i == 2) return std::true_type{};}));
+static_assert([]{
+    int ret = 0;
+    em::Meta::ConstFor<em::Meta::LoopSimple, 4>([&]<int i>{ret = ret * 10 + i + 1;});
+    return ret;
+}() == 1234);
 
-static constexpr int x = 42;
-static_assert(std::is_same_v<decltype(em::Meta::ConstForEx<4>([]<int i> -> const int & {return x;})), const int &>);
+static_assert([]{
+    int ret = 0;
+    em::Meta::ConstForEach<em::Meta::LoopSimple, 5, 6, 7, 8>([&]<int i>{ret = ret * 10 + i;});
+    return ret;
+}() == 5678);
 
-template <int I>
-struct A
-{
-    constexpr operator bool() const {return I == 2;}
-    friend bool operator==(A, A) = default;
-};
-static_assert(em::Meta::ConstForEx<4>([]<int i>{return A<i>{};}) == A<2>{});
+static_assert(em::Meta::ConstForEach<em::Meta::LoopAnyOf<>, int, float, double>([]<typename T>{return std::is_same_v<T, float>;}));
+static_assert(!em::Meta::ConstForEach<em::Meta::LoopAnyOf<>, int, float, double>([]<typename T>{return std::is_same_v<T, char>;}));
 
-static_assert(std::is_same_v<decltype(em::Meta::ConstForEx<4>([]<int i>{
-    if constexpr (i == 1)
-        return A<1>{};
-    else if constexpr (i == 2)
-        return em::Meta::NoElements<false>{};
-    else if constexpr (i == 3)
-        return em::Meta::NoElements<true>{};
-})), A<1>>);
+static_assert(std::is_same_v<decltype(em::Meta::ConstForEach<em::Meta::LoopAnyOfConsteval<>, int, float, double>([]<typename T>{return std::is_same<T, float>{};}))::type, std::true_type>);
+static_assert(std::is_same_v<decltype(em::Meta::ConstForEach<em::Meta::LoopAnyOfConsteval<>>([]<typename T>{return std::is_same<T, float>{};})), std::nullptr_t>);
 
-static_assert(std::is_same_v<decltype(em::Meta::ConstForEx<4>([]<int i>{
-    if constexpr (i == 1)
-        return A<1>{};
-    else if constexpr (i == 2)
-        return em::Meta::NoElements<false>{};
-    else if constexpr (i == 3)
-        return em::Meta::NoElements<false>{};
-})), A<1>>);
+static_assert([]{
+    int ret = 0;
+    em::Meta::RunEachFunc<em::Meta::LoopSimple>([&]{ret += 10;}, [&]{ret += 20;});
+    return ret;
+}() == 30);
 
-static_assert(std::is_same_v<decltype(em::Meta::ConstForEx<4>([]<int i>{
-    if constexpr (i == 1)
-        return A<1>{};
-    else if constexpr (i == 3)
-        return em::Meta::NoElements<false>{};
-})), void>);
+static_assert([]{
+    int ret = 0;
+    em::Meta::RunEachFunc<em::Meta::LoopSimple>([&]{ret += 1; return false;}, [&]{ret += 10; return true;}, [&]{ret += 100; return false;});
+    return ret;
+}() == 111);
+static_assert([]{
+    int ret = 0;
+    em::Meta::RunEachFunc<em::Meta::LoopAnyOf<>>([&]{ret += 1; return false;}, [&]{ret += 10; return true;}, [&]{ret += 100; return false;});
+    return ret;
+}() == 11);
 
-static_assert(std::is_same_v<decltype(em::Meta::ConstForEx<4>([]<int i>{
-    if constexpr (i == 1)
-        return A<1>{};
-    else if constexpr (i == 2)
-        return em::Meta::NoElements<false>{};
-    if constexpr (i == 3)
-        return A<3>{};
-})), A<3>>);
-
-static_assert(std::is_same_v<decltype(em::Meta::ConstForEx<2>([]<int i>{
-    return em::Meta::NoElements<false>{};
-})), em::Meta::NoElements<false>>);
-
-
-// ---
-
-
-static_assert(std::is_void_v<decltype(em::Meta::ConstForEachEx<int, float, double>([]<typename>{}))>);
-static_assert(std::is_void_v<decltype(em::Meta::ConstForEachEx<1,2,3>([]<int i>{}))>);
-static_assert(std::is_same_v<decltype(em::Meta::ConstForEachEx<>([]<typename>{})), em::Meta::NoElements<false>>);
-static_assert(std::is_same_v<decltype(em::Meta::ConstForEachEx<>([]<int i>{})), em::Meta::NoElements<false>>);
-
-static_assert(std::is_void_v<decltype(em::Meta::ConstForEachEx(em::Meta::TypeList<int, float, double>{}, []<typename>{}))>);
-static_assert(std::is_void_v<decltype(em::Meta::ConstForEachEx(em::Meta::ValueList<1,2,3>{}, []<int i>{}))>);
-static_assert(std::is_same_v<decltype(em::Meta::ConstForEachEx(em::Meta::TypeList{}, []<typename>{})), em::Meta::NoElements<false>>);
-static_assert(std::is_same_v<decltype(em::Meta::ConstForEachEx(em::Meta::ValueList{}, []<int i>{})), em::Meta::NoElements<false>>);
+// #error test the return type of consteval RunEachFunc

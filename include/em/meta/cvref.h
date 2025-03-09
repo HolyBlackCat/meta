@@ -22,6 +22,14 @@ namespace em::Meta
     template <typename A, typename B> concept same_ignoring_cv = std::same_as<std::remove_cv_t<A>, std::remove_cv_t<B>>;
     template <typename A, typename B> concept same_ignoring_cvref = std::same_as<std::remove_cvref_t<A>, std::remove_cvref_t<B>>;
 
+
+    // --- Inheritance and qualifiers.
+
+    // Like `std::derived_from`, but ignores cvref.
+    template <typename Derived, typename Base>
+    concept derived_from_ignoring_cvref = std::derived_from<std::remove_cvref_t<Derived>, std::remove_cv_t<Base>>;
+
+
     // `Derived` is derived from `Base` (or are the same type, possibly non-class) (ignoring cvref-qualifiers on both),
     // and `Derived` is convertible to `Base` (respecting the cvref-qualifiers.
     template <typename Derived, typename Base>
