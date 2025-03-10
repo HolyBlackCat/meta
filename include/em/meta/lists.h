@@ -4,6 +4,7 @@
 #include "em/meta/tags.h" // For `ValueTag`.
 
 #include <type_traits>
+#include <utility>
 
 // Type and value list manipulation.
 
@@ -30,6 +31,12 @@ namespace em::Meta
         template <typename T> struct list_size {};
         template <typename ...P> struct list_size<TypeList<P...>> : std::integral_constant<std::size_t, sizeof...(P)> {};
         template <auto ...V> struct list_size<ValueList<V...>> : std::integral_constant<std::size_t, sizeof...(V)> {};
+
+        // Reverses a list.
+        // Here we use pack indexing. Porting to older compilers would need an alternative implementation.
+        template <typename T, typename I = std::make_index_sequence<list_size<T>::value>> struct list_reverse {};
+        template <typename ...T, std::size_t ...I> struct list_reverse<TypeList<T...>, std::index_sequence<I...>> {using type = TypeList<T...[sizeof...(T)-1-I]...>;};
+        template <auto ...V, std::size_t ...I> struct list_reverse<ValueList<V...>, std::index_sequence<I...>> {using type = ValueList<V...[sizeof...(V)-1-I]...>;};
 
         // Append elements to a list.
         template <typename T, typename ...P> struct list_append_types {};
@@ -220,6 +227,9 @@ namespace em::Meta
 
     // Returns size of a `{type|value}_list`.
     template <typename T> constexpr std::size_t list_size = detail::list_size<T>::value;
+
+    // Reverses a list.
+    template <typename T> using list_reverse = typename detail::list_reverse<T>::type;
 
     // Append elements to a list.
     template <typename T, typename ...P> using list_append_types = typename detail::list_append_types<T, P...>::type;
