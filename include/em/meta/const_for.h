@@ -68,6 +68,7 @@ namespace em::Meta
     // The simplest loop. Always returns void, can't be stopped midway. The return values of the functors are ignored.
     struct LoopSimple : BasicLoopBackend
     {
+        static constexpr bool is_reverse = false;
         using reverse = LoopSimple_Reverse;
 
         static constexpr void NoElements() {}
@@ -78,11 +79,11 @@ namespace em::Meta
 
         static constexpr void RunEachFunc(auto &&... funcs) {(void)(void(EM_FWD(funcs)()), ...);}
 
-        static constexpr bool range_loop_is_backwards = false;
         static constexpr void ForRange(auto begin, auto end, auto &&func) {while (begin != end) {func(*begin); ++begin;}}
     };
     struct LoopSimple_Reverse : BasicLoopBackend
     {
+        static constexpr bool is_reverse = true;
         using reverse = LoopSimple;
 
         static constexpr void NoElements() {}
@@ -93,7 +94,6 @@ namespace em::Meta
 
         static constexpr void RunEachFunc(auto &&... funcs) {int x = 0; (void)((void(EM_FWD(funcs)()), x) = ... = 0);}
 
-        static constexpr bool range_loop_is_backwards = true;
         static constexpr void ForRange(auto begin, auto end, auto &&func) {while (begin != end) {--end; func(*end);}}
     };
 
@@ -106,6 +106,7 @@ namespace em::Meta
     template <typename ReturnType = bool>
     struct LoopAnyOf : BasicLoopBackend
     {
+        static constexpr bool is_reverse = false;
         using reverse = LoopAnyOf_Reverse<ReturnType>;
 
         static constexpr ReturnType NoElements() {return ReturnType();}
@@ -115,12 +116,12 @@ namespace em::Meta
 
         static constexpr ReturnType RunEachFunc(auto &&... funcs) {ReturnType ret{}; (void)(bool(ret = EM_FWD(funcs)()) || ...); return ret;}
 
-        static constexpr bool range_loop_is_backwards = false;
         static constexpr ReturnType ForRange(auto begin, auto end, auto &&func) {ReturnType ret{}; while (begin != end) {if ((ret = func(*begin))) break; ++begin;} return ret;}
     };
     template <typename ReturnType = bool>
     struct LoopAnyOf_Reverse : BasicLoopBackend
     {
+        static constexpr bool is_reverse = true;
         using reverse = LoopAnyOf<ReturnType>;
 
         static constexpr ReturnType NoElements() {return ReturnType();}
@@ -130,7 +131,6 @@ namespace em::Meta
 
         static constexpr ReturnType RunEachFunc(auto &&... funcs) {return [&]<std::size_t ...I>(std::index_sequence<I...>){ReturnType ret{}; (void)(bool(ret = EM_FWD(funcs...[sizeof...(I)-1-I])()) || ...); return ret;}(std::make_index_sequence<sizeof...(funcs)>{});}
 
-        static constexpr bool range_loop_is_backwards = true;
         static constexpr ReturnType ForRange(auto begin, auto end, auto &&func) {ReturnType ret{}; while (begin != end) {--end; if ((ret = func(*end))) break;} return ret;}
     };
 
@@ -152,6 +152,7 @@ namespace em::Meta
         // This is fixed in newer C++ (in Clang 20).
         // This doesn't really matter, because it only runs at compile-time and normally needs captureless lambdas.
 
+        static constexpr bool is_reverse = false;
         using reverse = LoopAnyOfConsteval_Reverse<ReturnTypeIfEmpty>;
 
         static constexpr ReturnTypeIfEmpty NoElements() {return ReturnTypeIfEmpty();}
@@ -223,6 +224,7 @@ namespace em::Meta
         // This is fixed in newer C++ (in Clang 20).
         // This doesn't really matter, because it only runs at compile-time and normally needs captureless lambdas.
 
+        static constexpr bool is_reverse = true;
         using reverse = LoopAnyOfConsteval<ReturnTypeIfEmpty>;
 
         static constexpr ReturnTypeIfEmpty NoElements() {return ReturnTypeIfEmpty();}

@@ -47,6 +47,12 @@ static_assert(std::is_same_v<em::Meta::LoopAnyOf<int>::reverse, em::Meta::LoopAn
 static_assert(std::is_same_v<em::Meta::LoopAnyOf_Reverse<int>::reverse, em::Meta::LoopAnyOf<int>>);
 static_assert(std::is_same_v<em::Meta::LoopAnyOfConsteval<int>::reverse, em::Meta::LoopAnyOfConsteval_Reverse<int>>);
 static_assert(std::is_same_v<em::Meta::LoopAnyOfConsteval_Reverse<int>::reverse, em::Meta::LoopAnyOfConsteval<int>>);
+static_assert(em::Meta::LoopSimple::is_reverse                      == false);
+static_assert(em::Meta::LoopSimple_Reverse::is_reverse              == true );
+static_assert(em::Meta::LoopAnyOf<int>::is_reverse                  == false);
+static_assert(em::Meta::LoopAnyOf_Reverse<int>::is_reverse          == true );
+static_assert(em::Meta::LoopAnyOfConsteval<int>::is_reverse         == false);
+static_assert(em::Meta::LoopAnyOfConsteval_Reverse<int>::is_reverse == true );
 
 
 // Misc tests:
