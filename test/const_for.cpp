@@ -1,6 +1,6 @@
 #include "em/meta/const_for.h"
 
-static constexpr int test_array[3]{1,2,3};
+static constexpr int test_array[3]{4, 5, 6};
 
 #define YES(...) __VA_ARGS__
 #define NO(...)
@@ -24,6 +24,7 @@ static constexpr int test_array[3]{1,2,3};
         static_assert((em::Meta::ForEach<Backend>(test_array, test_array + 3, [](int){__VA_ARGS__}), true)); \
         static_assert([]{int ret = 0; em::Meta::ConstForEach<Backend, 4,5,6>([&]<auto I>{ret = ret * 10 + I; __VA_ARGS__}); return ret;}() == NumberOrder); \
         static_assert([]{int ret = 0; em::Meta::RunEachFunc<Backend>([&]{ret = ret * 10 + 4; __VA_ARGS__}, [&]{ret = ret * 10 + 5; __VA_ARGS__}, [&]{ret = ret * 10 + 6; __VA_ARGS__}); return ret;}() == NumberOrder); \
+        static_assert([]{int ret = 0; em::Meta::ForEach<Backend>(test_array, test_array + 3, [&](int i){ret = ret * 10 + i; __VA_ARGS__}); return ret;}() == NumberOrder); \
     )
 
 CHECK_BACKEND(em::Meta::LoopSimple                     , 456, YES)
