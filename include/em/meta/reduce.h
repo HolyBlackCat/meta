@@ -28,9 +28,11 @@ namespace em::Meta
 
     // Reduces list `P...` over `T<A,B>`. If there's only one `P`, returns it unchanged. If `P...` is empty, fails.
     template <template <typename, typename> typename T, typename ...P>
+    requires requires{typename detail::Reduce<T, P...>::type;}
     using reduce_types = detail::Reduce<T, P...>::type;
 
     // Reduces list `P...` over `T<A,B>::type`. If there's only one `P`, returns it unchanged. If `P...` is empty, fails.
     template <template <typename, typename> typename T, typename ...P>
+    requires requires{typename detail::ReduceIndirect<T, P...>::type;}
     using reduce_types_indirect = detail::ReduceIndirect<T, P...>::type;
 }
