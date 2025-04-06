@@ -38,6 +38,7 @@ namespace em::Meta
         {
             value = std::move(other.value);
             other.value = {};
+            return *this;
         }
     };
 }
