@@ -1,7 +1,5 @@
 #pragma once
 
-#include <type_traits>
-
 namespace em::Meta
 {
     // A tag. This can be used for ADL dispatch, which is intentional (`foo(Tag<T>{})` will search the namespace of `T` with ADL).
