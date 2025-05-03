@@ -1,8 +1,11 @@
 #pragma once
 
 #include "em/macros/portable/tiny_func.h"
+#include "em/macros/utils/flag_enum.h"
 #include "em/macros/utils/forward.h"
 #include "em/macros/utils/returns.h"
+#include "em/meta/concepts.h"
+#include "em/meta/deduce.h"
 
 #include <functional>
 #include <type_traits>
@@ -26,6 +29,37 @@ namespace em::Meta
     static constexpr construct_t<T> construct{};
 
 
+    enum class ToFunctorFlags
+    {
+        // For classes, return a helper callable class that store a refernce to yours.
+        // This is useful if you're planning to inherit from it, but don't want copying.
+        ref = 1 << 0,
+    };
+    EM_FLAG_ENUM(ToFunctorFlags)
+
+    // This is what `ToFunctorFlags::ref` returns.
+    template <reference F>
+    struct FunctorRef
+    {
+        F ref;
+
+        // Intentionally not perfect-forwarding `ref` based on the rvalue-ness of self.
+        [[nodiscard]] constexpr auto operator()(auto &&... args) EM_RETURNS(ref(EM_FWD(args)...))
+    };
+
+    // Converts a function pointer or a class member pointer to a functor object. Existing functors are returned as is.
+    // NOTE: This can't be optimal, as the resulting functors are stateful.
+    // If your inputs are known at compile-time, prefer the macros from `em/macros/utils/lift.h`.
+    template <ToFunctorFlags Flags = {}, Deduce..., typename T> requires std::is_class_v<std::remove_cvref_t<T>> && (!bool(Flags & ToFunctorFlags::ref))
+    [[nodiscard]] constexpr auto ToFunctorObject(T &&func) -> T && {return EM_FWD(func);}
+    template <ToFunctorFlags Flags = {}, Deduce..., typename T> requires std::is_class_v<std::remove_cvref_t<T>> && (bool(Flags & ToFunctorFlags::ref))
+    [[nodiscard]] constexpr auto ToFunctorObject(T &&func) -> FunctorRef<T &&> {return {EM_FWD(func)};}
+    template <ToFunctorFlags Flags = {}, Deduce..., typename T> requires std::is_function_v<std::remove_pointer_t<T>>
+    [[nodiscard]] constexpr auto ToFunctorObject(T func) {return [func](auto &&... args) EM_RETURNS(func(EM_FWD(args)...));}
+    template <ToFunctorFlags Flags = {}, Deduce..., typename T> requires std::is_member_pointer_v<T>
+    [[nodiscard]] constexpr auto ToFunctorObject(T func) EM_RETURNS(EM_FWD(func))
+
+
     namespace detail::Functional
     {
         // Not using the base template, because we need different `requires` on both specializations,
@@ -47,8 +81,9 @@ namespace em::Meta
 
     // Folds 2+ arguments over a binary function.
     // There's no overload for one argument because it's unclear if we should return by value or by reference in that case. Handle that manually.
-    // This has to exist because you can't do recursive calls directly in `EM_RETURNS(...)`, because they don't work in return type `decltype(...)`,
-    //   and in `noexcept(...)` too. Lame.
+    // This has to exist because you seemingly can't do recursive calls to free functions directly in `EM_RETURNS(...)`,
+    //   because they don't work in return type `decltype(...)`, and in the `noexcept(...)` too. Lame.
+    // Note that class member functions with deduced `this` can recurse normally without this helper.
 
     [[nodiscard]] EM_TINY constexpr auto Fold(auto &&func, auto &&a, auto &&b) EM_RETURNS(std::invoke(EM_FWD(func), EM_FWD(a), EM_FWD(b)))
 
