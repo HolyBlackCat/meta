@@ -1,6 +1,6 @@
 #pragma once
 
-#include "em/meta/packs.h"
+#include "em/meta/common.h"
 
 // Generalizes `std::allocator_traits::rebind` for arbitrary types.
 
