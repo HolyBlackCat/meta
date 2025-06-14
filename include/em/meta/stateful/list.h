@@ -1,8 +1,8 @@
 #pragma once
 
 #include "em/macros/portable/warnings.h"
+#include "em/meta/common.h" // For the tags at least.
 #include "em/meta/lists.h"
-#include "em/meta/tags.h"
 
 #include <cstddef>
 #include <type_traits>

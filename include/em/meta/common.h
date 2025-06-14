@@ -5,6 +5,14 @@
 
 namespace em::Meta
 {
+    // --- Tags.
+
+    // A tag. This can be used for ADL dispatch, which is intentional (`foo(Tag<T>{})` will search the namespace of `T` with ADL).
+    template <typename T> struct Tag {using type = T;};
+
+    template <auto N> struct ValueTag {static constexpr auto value = N;};
+
+
     // --- Force template argument deduction.
 
     // This can be used as `template <__, Deduce..., __>`, to force the template parameters after it to be deduced.
@@ -112,6 +120,15 @@ namespace em::Meta
     template <typename A, typename B> using copy_cv    = typename detail::copy_cv_impl<std::remove_reference_t<A>, B>::type;
     // Adds cvref-qualifiers from `A` to `B`. If `B` is a reference, the cv-qualifiers of `A` are ignored and the normal reference collapsing rules apply.
     template <typename A, typename B> using copy_cvref = typename detail::copy_cvref_impl<A, B>::type;
+
+
+    // --- Some constants.
+
+    template <typename, typename...>
+    inline constexpr auto always_false = false;
+
+    template <typename, typename...> struct true_trait : std::true_type {};
+    template <typename, typename...> struct false_trait : std::false_type {};
 
 
     // --- Basic pack manipulation.
