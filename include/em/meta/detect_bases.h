@@ -1,4 +1,4 @@
-#include "em/meta/cvref.h"
+#include "em/meta/common.h"
 #include "em/meta/stateful/list.h"
 
 // This file must be used together with `em/macros/meta/detectable_base.h`. That file is in a different repository.

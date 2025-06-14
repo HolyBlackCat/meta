@@ -4,8 +4,7 @@
 #include "em/macros/utils/flag_enum.h"
 #include "em/macros/utils/forward.h"
 #include "em/macros/utils/returns.h"
-#include "em/meta/concepts.h"
-#include "em/meta/deduce.h"
+#include "em/meta/common.h"
 
 #include <functional>
 #include <type_traits>
@@ -51,11 +50,11 @@ namespace em::Meta
     // NOTE: This can't be optimal, as the resulting functors are stateful.
     // If your inputs are known at compile-time, prefer the macros from `em/macros/utils/lift.h`.
     template <ToFunctorFlags Flags = {}, Deduce..., typename T> requires std::is_class_v<std::remove_cvref_t<T>> && (!bool(Flags & ToFunctorFlags::ref))
-    [[nodiscard]] constexpr auto ToFunctorObject(T &&func) -> T && {return EM_FWD(func);}
+    [[nodiscard]] constexpr auto ToFunctorObject(T &&func) noexcept -> T && {return EM_FWD(func);}
     template <ToFunctorFlags Flags = {}, Deduce..., typename T> requires std::is_class_v<std::remove_cvref_t<T>> && (bool(Flags & ToFunctorFlags::ref))
-    [[nodiscard]] constexpr auto ToFunctorObject(T &&func) -> FunctorRef<T &&> {return {EM_FWD(func)};}
+    [[nodiscard]] constexpr auto ToFunctorObject(T &&func) noexcept -> FunctorRef<T &&> {return {EM_FWD(func)};}
     template <ToFunctorFlags Flags = {}, Deduce..., typename T> requires std::is_function_v<std::remove_pointer_t<T>>
-    [[nodiscard]] constexpr auto ToFunctorObject(T func) {return [func](auto &&... args) EM_RETURNS(func(EM_FWD(args)...));}
+    [[nodiscard]] constexpr auto ToFunctorObject(T func) noexcept {return [func](auto &&... args) EM_RETURNS(func(EM_FWD(args)...));}
     template <ToFunctorFlags Flags = {}, Deduce..., typename T> requires std::is_member_pointer_v<T>
     [[nodiscard]] constexpr auto ToFunctorObject(T func) EM_RETURNS(EM_FWD(func))
 

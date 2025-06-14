@@ -2,15 +2,10 @@
 
 #include <type_traits>
 
+#include "em/meta/common.h"
+
 namespace em::Meta
 {
-    template <typename T>
-    concept bool_convertible = requires(const std::remove_cvref_t<T> &t){t ? true : false;};
-
-    template <typename T>
-    concept reference = std::is_reference_v<T>;
-
-
     namespace detail::Truthy
     {
         template <typename T>
@@ -23,12 +18,12 @@ namespace em::Meta
     #endif
 
     // Returns true if the type `T` is always true when converted to `bool`, and is constexpr-convertible to bool even when it's not constexpr itself.
-    // Such is e.g. `std::true_type` (but not references to it, at the time of writing).
+    // Such is e.g. `std::true_type` (references to those are only accepted in sufficiently new compilers).
     template <typename T>
     concept truthy_type = bool_convertible<T> && std::bool_constant<detail::Truthy::declvar<T> ? true : false>::value;
 
     // Returns true if the type `T` is always false when converted to `bool`, and is constexpr-convertible to bool even when it's not constexpr itself.
-    // Such is e.g. `std::false_type` or `std::nullptr_t` (but not references to those, at the time of writing).
+    // Such is e.g. `std::false_type` or `std::nullptr_t` (references to those are only accepted in sufficiently new compilers).
     template <typename T>
     concept falsey_type = bool_convertible<T> && std::bool_constant<detail::Truthy::declvar<T> ? false : true>::value;
 

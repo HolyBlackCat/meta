@@ -1,6 +1,6 @@
 #pragma once
 
-#include "em/meta/cvref.h"
+#include "em/meta/common.h"
 
 #include <type_traits>
 #include <utility>
@@ -19,7 +19,7 @@ namespace em::Meta
 
         template <typename P0, typename ...P>
         requires
-            (sizeof...(P) > 0 || !derived_from_ignoring_cvref<P0, ZeroMovedFrom>) && // Avoid conflicts with copy-move constructors.
+            (sizeof...(P) > 0 || !same_or_derived_from_ignoring_cvref<P0, ZeroMovedFrom>) && // Avoid conflicts with copy-move constructors.
             std::is_constructible_v<T, P0 &&, P &&...>
             constexpr ZeroMovedFrom(P0 &&params0, P &&... params) noexcept(std::is_nothrow_constructible_v<T, P0 &&, P &&...>)
             : value(std::forward<P0>(params0), std::forward<P>(params)...)
