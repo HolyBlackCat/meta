@@ -11,6 +11,15 @@
 
 namespace em::Meta
 {
+    // Like `std::invoke()`, but triggers a SFINAE error if the return type isn't `void`.
+    // Note that `std::invoke_r<void>()` isn't the same thing, because that silently ignores return values and always returns `void` regardless.
+    template <Deduce..., typename F, typename ...P> requires std::is_void_v<std::invoke_result_t<F &&, P &&...>>
+    constexpr void invoke_void(F &&func, P &&... params) noexcept(std::is_nothrow_invocable_v<F &&, P &&...>)
+    {
+        std::invoke(EM_FWD(func), EM_FWD(params)...);
+    }
+
+
     template <typename T>
     struct construct_t
     {
