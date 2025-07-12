@@ -1,7 +1,6 @@
 #pragma once
 
 #include "em/macros/portable/tiny_func.h"
-#include "em/macros/utils/flag_enum.h"
 #include "em/macros/utils/forward.h"
 #include "em/macros/utils/returns.h"
 #include "em/meta/common.h"
@@ -20,6 +19,7 @@ namespace em::Meta
     }
 
 
+    // See `construct` below.
     template <typename T>
     struct construct_t
     {
@@ -31,41 +31,38 @@ namespace em::Meta
             return T(decltype(params)(params)...);
         }
     };
-
     // A functor that constructs `T`.
     template <typename T>
     static constexpr construct_t<T> construct{};
 
-
-    enum class ToFunctorFlags
+    // If `T` isn't an lvalue reference, returns `value` with the forwarding preserved.
+    // Otherwise forces it to be an lvalue reference.
+    template <typename T, Deduce..., typename U>
+    [[nodiscard]] constexpr auto &&combine_forwarding(U &&value) noexcept
     {
-        // For classes, return a helper callable class that store a refernce to yours.
-        // This is useful if you're planning to inherit from it, but don't want copying.
-        ref = 1 << 0,
-    };
-    EM_FLAG_ENUM(ToFunctorFlags)
+        if constexpr (std::is_lvalue_reference_v<T>)
+            return static_cast<U &>(value);
+        else
+            return EM_FWD(value);
+    }
 
-    // This is what `ToFunctorFlags::ref` returns.
+
+    // A functor that acts as a reference to another functor.
     template <reference F>
-    struct FunctorRef
+    struct FuncRef
     {
         F ref;
 
-        // Intentionally not perfect-forwarding `ref` based on the rvalue-ness of self.
-        [[nodiscard]] constexpr auto operator()(auto &&... args) EM_RETURNS(ref(EM_FWD(args)...))
+        // Writing this in a very particular way, to forward the functor only if both `ref` and `self` are rvalue references.
+        [[nodiscard]] constexpr auto operator()(this auto &&self, auto &&... args) EM_RETURNS(std::invoke((combine_forwarding<decltype(self)>)(EM_FWD(self.ref)), EM_FWD(args)...))
     };
+    template <typename F> requires(!specialization_of_ignoring_cvref<F, FuncRef>)
+    FuncRef(F &&) -> FuncRef<F &&>;
+    template <typename T>
+    FuncRef(const FuncRef<T> &) -> FuncRef<T>; // This handles all other cvref variants of the argument too. Can't pass by value here, because it might not be copyable,
 
-    // Converts a function pointer or a class member pointer to a functor object. Existing functors are returned as is.
-    // NOTE: This can't be optimal, as the resulting functors are stateful.
-    // If your inputs are known at compile-time, prefer the macros from `em/macros/utils/lift.h`.
-    template <ToFunctorFlags Flags = {}, Deduce..., typename T> requires std::is_class_v<std::remove_cvref_t<T>> && (!bool(Flags & ToFunctorFlags::ref))
-    [[nodiscard]] constexpr auto ToFunctorObject(T &&func) noexcept -> T && {return EM_FWD(func);}
-    template <ToFunctorFlags Flags = {}, Deduce..., typename T> requires std::is_class_v<std::remove_cvref_t<T>> && (bool(Flags & ToFunctorFlags::ref))
-    [[nodiscard]] constexpr auto ToFunctorObject(T &&func) noexcept -> FunctorRef<T &&> {return {EM_FWD(func)};}
-    template <ToFunctorFlags Flags = {}, Deduce..., typename T> requires std::is_function_v<std::remove_pointer_t<T>>
-    [[nodiscard]] constexpr auto ToFunctorObject(T func) noexcept {return [func](auto &&... args) EM_RETURNS(func(EM_FWD(args)...));}
-    template <ToFunctorFlags Flags = {}, Deduce..., typename T> requires std::is_member_pointer_v<T>
-    [[nodiscard]] constexpr auto ToFunctorObject(T func) EM_RETURNS(EM_FWD(func))
+    // Wraps the argument in `FuncRef` and then calls `std::not_fn()` on it to negate it.
+    [[nodiscard]] constexpr auto MakeNegatedFuncRef(auto &&func) EM_RETURNS(std::not_fn(FuncRef(EM_FWD(func))))
 
 
     namespace detail::Functional
