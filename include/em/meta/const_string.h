@@ -1,5 +1,7 @@
 #pragma once
 
+#include "em/zstring_view.h"
+
 #include <algorithm>
 #include <cstddef>
 #include <string_view>
@@ -8,6 +10,7 @@
 namespace em::Meta
 {
     // A string that can be used as a template parameter.
+    // `N` includes the null-terminator.
     template <std::size_t N>
     struct ConstString
     {
@@ -23,11 +26,11 @@ namespace em::Meta
             std::copy_n(new_str, size, str);
         }
 
-        [[nodiscard]] constexpr std::string_view view() const &
+        [[nodiscard]] constexpr zstring_view view() const &
         {
-            return {str, str + size};
+            return zstring_view(zstring_view::TrustSpecifiedSize{}, std::string_view(str, str + size));
         }
-        [[nodiscard]] constexpr std::string_view view() const && = delete;
+        [[nodiscard]] constexpr zstring_view view() const && = delete;
     };
 
     template <std::size_t A, std::size_t B>
