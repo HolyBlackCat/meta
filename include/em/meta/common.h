@@ -78,7 +78,7 @@ namespace em::Meta
     // Forwards `x` with constness added. Unlike `std::as_const()`, this can also handle rvalues.
     inline constexpr auto make_const = []<typename T> [[nodiscard]] (T &&x) -> auto &&
     {
-        return static_cast<const_type<T &&>>(x);
+        return static_cast<const_type_cvref<T &&>>(x);
     };
 
 
