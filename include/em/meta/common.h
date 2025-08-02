@@ -20,15 +20,6 @@ namespace em::Meta
     template <typename> concept Deduce = false;
 
 
-    // --- Some basic concepts.
-
-    template <typename T>
-    concept bool_convertible = requires(const std::remove_cvref_t<T> &t){t ? true : false;};
-
-    template <typename T>
-    concept reference = std::is_reference_v<T>;
-
-
     // --- Check lack of qualifiers.
 
     template <typename T> concept cv_unqualified = std::is_same_v<std::remove_cv_t<T>, T>;
@@ -39,6 +30,31 @@ namespace em::Meta
 
     template <typename A, typename B> concept same_ignoring_cv = std::same_as<std::remove_cv_t<A>, std::remove_cv_t<B>>;
     template <typename A, typename B> concept same_ignoring_cvref = std::same_as<std::remove_cvref_t<A>, std::remove_cvref_t<B>>;
+
+
+    // --- Some basic concepts.
+
+    template <typename T>
+    concept bool_convertible = requires(const std::remove_cvref_t<T> &t){t ? true : false;};
+
+    template <typename T>
+    concept reference = std::is_reference_v<T>;
+
+    // Whether `ArrayType` is an array (of known bound) of type `ElemType`, with exact cv-qualifiers.
+    // Note that arrays don't have their own cv-qualifiers (they inherit them from the element type),
+    //   so we don't do anything special for the cv-qualifiers of the array itself.
+    template <typename ArrayType, typename ElemType>
+    concept bounded_array_of = std::is_bounded_array_v<ArrayType> && std::same_as<std::remove_extent_t<ArrayType>, ElemType>;
+
+    // Whether `ArrayType` is an array (of known bound) of type `ElemType`, ignoring cv-qualifiers on both.
+    // Note that arrays don't have their own cv-qualifiers (they inherit them from the element type).
+    template <typename ArrayType, typename ElemType>
+    concept bounded_array_of_ignoring_cv = std::is_bounded_array_v<ArrayType> && same_ignoring_cv<std::remove_extent_t<ArrayType>, ElemType>;
+
+    // Whether `T` is a `const char [N]` or a reference to it.
+    // The name is a bit misleading, since the constness is fixed, but elsewhere we use `cvref` for forwarding references, so we do it here too.
+    template <typename T>
+    concept possibly_string_literal_cvref = bounded_array_of<std::remove_reference_t<T>, const char>;
 
 
     // --- Inheritance and qualifiers.
