@@ -28,7 +28,7 @@ namespace em::Meta
 
         [[nodiscard]] constexpr zstring_view view() const &
         {
-            return zstring_view(zstring_view::TrustSpecifiedSize{}, std::string_view(str, str + size));
+            return zstring_view(zstring_view::TrustNullTerminated{}, std::string_view(str, str + size));
         }
         [[nodiscard]] constexpr zstring_view view() const && = delete;
     };
