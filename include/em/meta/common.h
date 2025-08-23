@@ -65,14 +65,14 @@ namespace em::Meta
 
     // Like `std::derived_from`, but ignores cvref. And also returns true for same non-class types, while `std::derived_from` doesn't.
     template <typename Derived, typename Base>
-    concept same_or_derived_from_ignoring_cvref = same_or_derived_from<std::remove_cvref_t<Derived>, std::remove_cv_t<Base>>;
+    concept same_or_derived_from_ignoring_cvref = same_or_derived_from<std::remove_cvref_t<Derived>, std::remove_cvref_t<Base>>;
 
 
     // `Derived` is derived from `Base` (or are the same type, possibly non-class) (ignoring cvref-qualifiers on both),
     // and `Derived` is convertible to `Base` (respecting the cvref-qualifiers.
     template <typename Derived, typename Base>
     concept same_or_derived_from_and_cvref_convertible_to =
-        (same_ignoring_cvref<Derived, Base> || std::derived_from<std::remove_cvref_t<Derived>, std::remove_cvref_t<Base>>) &&
+        same_or_derived_from_ignoring_cvref<Derived, Base> &&
         std::convertible_to<Derived &&, Base>; // Note the added `&&` on the first argument. Not doing that explodes on incomplete types for no good reason.
 
 
