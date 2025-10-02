@@ -2,7 +2,6 @@
 
 #include "em/zstring_view.h"
 
-#include <algorithm>
 #include <cstddef>
 #include <string_view>
 #include <utility>
@@ -23,7 +22,10 @@ namespace em::Meta
         {
             if (new_str[N-1] != '\0')
                 std::unreachable();
-            std::copy_n(new_str, size, str);
+
+            // Hopefully a manual loop compiles faster than `std::copy_n()`.
+            for (std::size_t i = 0; i < size; i++)
+                str[i] = new_str[i];
         }
 
         [[nodiscard]] constexpr zstring_view view() const &
