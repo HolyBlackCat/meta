@@ -138,6 +138,14 @@ namespace em::Meta
     template <typename A, typename B> using copy_cvref = typename detail::copy_cvref_impl<A, B>::type;
 
 
+    // --- Force reference-ness.
+
+    // Removes cvref and adds `&`.
+    // This is great for recursively iterating over types using reflection, as the mapping function, since just passing `std::remove_cvref_t` would produce non-reference types, which we treat as rvalues.
+    template <typename T>
+    using RemoveConstAndForceLvalueRef = std::remove_cvref_t<T> &;
+
+
     // --- Some constants.
 
     template <typename, typename...>
