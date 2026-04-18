@@ -23,7 +23,7 @@ namespace em::Meta
         [[nodiscard]] constexpr ResetMovedFromValue(P &&... params) : value(EM_FWD(params)...) {}
 
         constexpr ResetMovedFromValue(ResetMovedFromValue &&other) noexcept : value(std::move(other.value)) {other.value = T{};}
-        constexpr ResetMovedFromValue &operator=(ResetMovedFromValue &&other) noexcept {value = std::move(other.value); other.value = T{};}
+        constexpr ResetMovedFromValue &operator=(ResetMovedFromValue &&other) noexcept {value = std::move(other.value); other.value = T{}; return *this;}
     };
 
     // Inherits from `T`, which gets reset when moved from.
@@ -39,6 +39,6 @@ namespace em::Meta
         [[nodiscard]] constexpr ResetMovedFromStruct(P &&... params) : T(EM_FWD(params)...) {}
 
         constexpr ResetMovedFromStruct(ResetMovedFromStruct &&other) noexcept : T(static_cast<T &&>(other)) {other.T::operator=(T{});}
-        constexpr ResetMovedFromStruct &operator=(ResetMovedFromStruct &&other) noexcept {T::operator=(static_cast<T &&>(other)); other.T::operator=(T{});}
+        constexpr ResetMovedFromStruct &operator=(ResetMovedFromStruct &&other) noexcept {T::operator=(static_cast<T &&>(other)); other.T::operator=(T{}); return *this;}
     };
 }
