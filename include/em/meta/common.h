@@ -32,6 +32,25 @@ namespace em::Meta
     template <typename A, typename B> concept same_ignoring_cvref = std::same_as<std::remove_cvref_t<A>, std::remove_cvref_t<B>>;
 
 
+    namespace detail
+    {
+        template <typename T, typename ...P>
+        struct NotSingleSameTypeIgnoringCvref : std::true_type {};
+
+        template <typename T, typename P>
+        struct NotSingleSameTypeIgnoringCvref<T, P> : std::bool_constant<!same_ignoring_cvref<T, P>>
+        {
+            static_assert(cvref_unqualified<T>, "`T` must be cvref-unqualified.");
+        };
+    }
+
+    // Returns false if `P...` only contains a single type, that's same as `T` ignoring cvref.
+    // Otherwise (if `sizeof...(P) != 1`, or `same_ignoring_cvref<P...[0], T> == false`), returns true.
+    // If `T` is not cvref-unqualified, triggers a hard error.
+    template <typename T, typename ...P>
+    concept not_single_same_type_ignoring_cvref = detail::NotSingleSameTypeIgnoringCvref<T, P...>::value;
+
+
     // --- Some basic concepts.
 
     template <typename T>
