@@ -59,7 +59,7 @@ namespace em::Meta
     template <typename F> requires(!specialization_of_ignoring_cvref<F, FuncRef>)
     FuncRef(F &&) -> FuncRef<F &&>;
     template <typename T>
-    FuncRef(const FuncRef<T> &) -> FuncRef<T>; // This handles all other cvref variants of the argument too. Can't pass by value here, because it might not be copyable,
+    FuncRef(const FuncRef<T> &) -> FuncRef<T>; // This handles all other cvref variants of the argument too. Can't pass by value here, because it might not be copyable.
 
     // Wraps the argument in `FuncRef` and then calls `std::not_fn()` on it to negate it.
     [[nodiscard]] constexpr auto MakeNegatedFuncRef(auto &&func) EM_RETURNS(std::not_fn(FuncRef(EM_FWD(func))))
