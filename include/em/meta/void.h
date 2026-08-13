@@ -44,13 +44,6 @@ namespace em::Meta
     }
 }
 
-// Same as `EM_RETURN_VARIABLE`, but also replaces `em::Meta::VoidPlaceholder` with `void`.
-#define EM_RETURN_VARIABLE_OR_VOID(...) \
-    DETAIL_EM_RETURN_VARIABLE( \
-        (if constexpr (::std::is_same_v<::std::remove_cvref_t<decltype(__VA_ARGS__)>, ::em::Meta::VoidPlaceholder>) {return;} else), \
-        __VA_ARGS__ \
-    )
-
 // If `...` is of type `void`, returns `em::Meta::VoidPlaceholder` by value.
 // Otherwise returns it unchanged (works correctly even if it's a non-reference).
 #define EM_VOID_TO_PLACEHOLDER(...) \
