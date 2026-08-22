@@ -220,7 +220,7 @@ namespace em::Meta::Scalars
         template <bool AllowBiggerTypes, typename ...P>
         struct LargerTypeBase : LargerTypeFp<AllowBiggerTypes, P...> {};
         template <bool AllowBiggerTypes, typename ...P> requires same_as_all<P...>
-        struct LargerTypeBase<AllowBiggerTypes, P...> {using type = first_type<P...>;};
+        struct LargerTypeBase<AllowBiggerTypes, P...> {using type = P...[0];};
     }
 
     // A convenience concept, checks that `LargerType<...>` below is valid.

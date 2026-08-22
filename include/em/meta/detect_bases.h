@@ -1,4 +1,5 @@
 #include "em/meta/common.h"
+#include "em/meta/lists.h"
 #include "em/meta/stateful/list.h"
 
 // This file must be used together with `em/macros/meta/detectable_base.h`. That file is in a different repository.
@@ -69,29 +70,29 @@ namespace em::Meta::DetectBases
     using AllBasesFlat = decltype((detail::Detect<Tag, T, detail::SelectTagAllBases>()), Meta::Stateful::List::Elems<detail::TagAllBases<Tag, T>>{});
     // Same, but includes `T` as the last type in the list.
     template <typename Tag, typename T>
-    using AllBasesFlatAndSelf = Meta::list_append_types<AllBasesFlat<Tag, T>, T>;
+    using AllBasesFlatAndSelf = Meta::List::append_types<AllBasesFlat<Tag, T>, T>;
 
     // A flat list of all virtual bases, including indirect ones, excluding self. Naturally never contains repetitions.
     template <typename Tag, typename T>
     using VirtualBasesFlat = decltype((detail::Detect<Tag, T, detail::SelectTagVirtualBases>()), Meta::Stateful::List::Elems<detail::TagVirtualBases<Tag, T>>{});
     // Same, but includes `T` as the last type in the list.
     template <typename Tag, typename T>
-    using VirtualBasesFlatAndSelf = Meta::list_append_types<VirtualBasesFlat<Tag, T>, T>;
+    using VirtualBasesFlatAndSelf = Meta::List::append_types<VirtualBasesFlat<Tag, T>, T>;
 
     // A flat list of all non-virtual bases, including indirect ones, excluding self. Never contains repetitions.
     template <typename Tag, typename T>
     using NonVirtualBasesFlat = decltype((detail::Detect<Tag, T, detail::SelectTagNonVirtualBases>()), Meta::Stateful::List::Elems<detail::TagNonVirtualBases<Tag, T>>{});
     // Same, but includes `T` as the last type in the list.
     template <typename Tag, typename T>
-    using NonVirtualBasesFlatAndSelf = Meta::list_append_types<NonVirtualBasesFlat<Tag, T>, T>;
+    using NonVirtualBasesFlatAndSelf = Meta::List::append_types<NonVirtualBasesFlat<Tag, T>, T>;
 
 
     namespace detail
     {
-        // NOTE: Here we use `list_subtract_ordered` as an optimization, hopefully. We expect that the bases appear in the same implementation-defined order.
-        // If you get more DIRECT bases than you expect, use the regular `list_subtract` here, hopefully behind an `#ifdef`.
+        // NOTE: Here we use `List::subtract_ordered` as an optimization, hopefully. We expect that the bases appear in the same implementation-defined order.
+        // If you get more DIRECT bases than you expect, use the regular `List::subtract` here, hopefully behind an `#ifdef`.
         template <typename Tag, typename T, typename U = T> struct SubtractBases {};
-        template <typename Tag, typename T, typename ...U> struct SubtractBases<Tag, T, Meta::TypeList<U...>> {using type = Meta::list_subtract_ordered<T, NonVirtualBasesFlat<Tag, U>...>;};
+        template <typename Tag, typename T, typename ...U> struct SubtractBases<Tag, T, Meta::TypeList<U...>> {using type = Meta::List::subtract_ordered<T, NonVirtualBasesFlat<Tag, U>...>;};
     }
 
     // Direct non-virtual bases, excluding self.
@@ -99,5 +100,5 @@ namespace em::Meta::DetectBases
     using NonVirtualBasesDirect = typename detail::SubtractBases<Tag, NonVirtualBasesFlat<Tag, T>>::type;
     // Same, but includes `T` as the last type in the list.
     template <typename Tag, typename T>
-    using NonVirtualBasesDirectAndSelf = Meta::list_append_types<NonVirtualBasesDirect<Tag, T>, T>;
+    using NonVirtualBasesDirectAndSelf = Meta::List::append_types<NonVirtualBasesDirect<Tag, T>, T>;
 }

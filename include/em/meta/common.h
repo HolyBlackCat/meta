@@ -1,6 +1,7 @@
 #pragma once
 
 #include <concepts>
+#include <cstddef>
 #include <type_traits>
 
 namespace em::Meta
@@ -9,8 +10,17 @@ namespace em::Meta
 
     // A tag. This can be used for ADL dispatch, which is intentional (`foo(Tag<T>{})` will search the namespace of `T` with ADL).
     template <typename T> struct Tag {using type = T;};
-
     template <auto N> struct ValueTag {static constexpr auto value = N;};
+
+    template <typename...> struct TypeList {};
+    template <auto...> struct ValueList {};
+
+    template <typename A, typename B>
+    struct TypePair
+    {
+        using first = A;
+        using second = B;
+    };
 
 
     // --- Force template argument deduction.
@@ -173,8 +183,22 @@ namespace em::Meta
     template <typename, typename...> struct true_trait : std::true_type {};
     template <typename, typename...> struct false_trait : std::false_type {};
 
+    template <auto, auto...> struct true_value_trait : std::true_type {};
+    template <auto, auto...> struct false_value_trait : std::false_type {};
+
 
     // --- Basic pack manipulation.
+
+    // Returns the first type in the pack.
+    // Prefer using `P...[0]` directly if your input is a pack. This typedef is useful when the input isn't a pack.
+    template <typename ...P>
+    using first_type = P...[0];
+
+    // Returns the ith element in the pack.
+    template <int I, typename ...P>
+    using type_at_i = P...[I];
+    template <std::size_t I, typename ...P>
+    using type_at_z = P...[I];
 
     namespace detail
     {
@@ -183,17 +207,18 @@ namespace em::Meta
         template <typename T, typename ...P> struct FirstType {using type = T;};
     }
 
-    // Returns the first type in the pack.
+    // Like `first_type`, but less obvious to the compiler. This is needed for `void_type` to function correctly, and is also provided as a separate typedef just in case.
     template <typename ...P>
-    using first_type = typename detail::FirstType<P...>::type;
+    using first_type_obscured = detail::FirstType<P...>::type;
 
     // Always `void`.
     template <typename ...P>
-    using void_type = first_type<void, P...>;
+    using void_type = first_type_obscured<void, P...>;
 
 
-    // Checks if all types are equal.
-    // Need `first_type` to avoid `Pack expansion used as argument for non-pack parameter of alias template` in some usages.
+    // Checks if all types are equal. Returns false if given no arguments.
+    // Need `P...[0]`/`first_type<P...>` as opposed to a separate template parameter to avoid `Pack expansion used as argument for non-pack parameter of alias template` in some usages.
+    // `P...[0]` here leads to incorrect results. Clang bug: https://github.com/llvm/llvm-project/issues/218035
     template <typename ...P> concept same_as_all = (std::same_as<first_type<P...>, P> && ...);
 
     // Checks if the first type is the same as any of the remaining ones.
@@ -201,7 +226,7 @@ namespace em::Meta
 
     // If all template parameters are the same type, returns that type. Otherwise fails.
     template <typename ...P> requires same_as_all<P...>
-    using require_same_type = first_type<P...>;
+    using require_same_type = P...[0];
 
 
     // --- Specializations.

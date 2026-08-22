@@ -3,7 +3,6 @@
 #include "em/macros/portable/warnings.h"
 #include "em/macros/utils/forward.h"
 #include "em/meta/common.h" // For the tags at least.
-#include "em/meta/lists.h"
 
 #include <cstddef>
 #include <type_traits>

@@ -125,8 +125,8 @@ namespace em::Meta
 
         static constexpr ReturnType NoElements() {return ReturnType();}
 
-        template <typename ...I>                            static constexpr ReturnType ForEach(auto &&func) {return ConstForEach<reverse>(list_reverse<TypeList <I...>>{}, EM_FWD(func));}
-        template <auto     ...I> requires(sizeof...(I) > 0) static constexpr ReturnType ForEach(auto &&func) {return ConstForEach<reverse>(list_reverse<ValueList<I...>>{}, EM_FWD(func));}
+        template <typename ...I>                            static constexpr ReturnType ForEach(auto &&func) {return ConstForEach<reverse>(List::reverse<TypeList <I...>>{}, EM_FWD(func));}
+        template <auto     ...I> requires(sizeof...(I) > 0) static constexpr ReturnType ForEach(auto &&func) {return ConstForEach<reverse>(List::reverse<ValueList<I...>>{}, EM_FWD(func));}
 
         static constexpr ReturnType RunEachFunc(auto &&... funcs) {return [&]<std::size_t ...I>(std::index_sequence<I...>){ReturnType ret{}; (void)(bool(ret = EM_FWD(funcs...[sizeof...(I)-1-I])()) || ...); return ret;}(std::make_index_sequence<sizeof...(funcs)>{});}
 
@@ -228,8 +228,8 @@ namespace em::Meta
 
         static constexpr ReturnTypeIfEmpty NoElements() {return ReturnTypeIfEmpty();}
 
-        template <typename ...I>                            static constexpr decltype(auto) ForEach(auto func) {return ConstForEach<reverse>(list_reverse<TypeList <I...>>{}, std::move(func));}
-        template <auto     ...I> requires(sizeof...(I) > 0) static constexpr decltype(auto) ForEach(auto func) {return ConstForEach<reverse>(list_reverse<ValueList<I...>>{}, std::move(func));}
+        template <typename ...I>                            static constexpr decltype(auto) ForEach(auto func) {return ConstForEach<reverse>(List::reverse<TypeList <I...>>{}, std::move(func));}
+        template <auto     ...I> requires(sizeof...(I) > 0) static constexpr decltype(auto) ForEach(auto func) {return ConstForEach<reverse>(List::reverse<ValueList<I...>>{}, std::move(func));}
 
         static constexpr decltype(auto) RunEachFunc(auto ...funcs) {return [&]<std::size_t ...I>(std::index_sequence<I...>){return reverse::RunEachFunc(std::move(funcs...[sizeof...(I)-1-I])...);}(std::make_index_sequence<sizeof...(funcs)>{});}
 
